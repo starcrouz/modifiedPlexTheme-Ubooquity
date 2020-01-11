@@ -29,6 +29,7 @@
         //////////////////////////////////
         //Add currently reading condition to comic
         //////////////////////////////////
+		var last_book_name = ""; // Used by the de-duplicator
         $('.thumb a img').each(function(){
           raw_src = $(this).attr('src')
           page_num = '0';
@@ -37,8 +38,19 @@
             //console.log("raw_src: "+raw_src);
           } else {
           //extract Comic ID
-            thing = $(this);
-            src = $(this).attr('src');
+            thing = $(this);          
+			src = $(this).attr('src');
+			// START of the de-duplicator (excepted line "last_book_name..."
+				var book_file_format = src.slice(src.lastIndexOf(".")+1, src.lastIndexOf("?")); // CBZ, CBR and PDF or of the book : EPUB, MOBI, AZW, PDF and DJVU
+				var book_name = src.slice(src.lastIndexOf("/")+1,src.lastIndexOf("."));
+				if(book_name == last_book_name) { // 2 books have the same name (but not the same format...)
+					if(book_file_format == "pdf") { // PDF format is not welcome if a CBR or CBZ file exist for the same comic
+						thing.parents('.cellcontainer').hide(); // hide the duplicate book if it is in pdf
+						console.log('duplicate book file hidden : ' + decodeURI(book_name) + '.pdf');
+					}
+				}
+				last_book_name = book_name // memorize the book name
+			// END of the de-duplicator
             //console.log("source: "+src);
             $(this).closest('.thumb').append('<div class="numberblock"><div class="number"><span></span></div></div>');
             var comicid = src.split('/');
@@ -48,7 +60,7 @@
             console.log("url: "+json_url);
 
             $.getJSON( json_url, function() {
-                console.log( "success" );
+                //console.log( "success" );
               }).done(function( data ) {
                 current_this = thing;
                 if (data != null){
